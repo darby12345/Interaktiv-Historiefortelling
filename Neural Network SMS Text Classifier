@@ -1,0 +1,138 @@
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "8RZOuS9LWQvv"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import tensorflow as tf\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from sklearn.preprocessing import LabelEncoder\n",
+        "from sklearn.feature_extraction.text import CountVectorizer\n",
+        "from sklearn.pipeline import Pipeline\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "lMHwYXHXCar3"
+      },
+      "outputs": [],
+      "source": [
+        "# Load the dataset\n",
+        "url = \"https://raw.githubusercontent.com/path/to/your/sms_spam_collection.csv\"  # Replace with the correct URL\n",
+        "data = pd.read_csv(url, encoding='latin-1')\n",
+        "\n",
+        "# Display the first few rows of the dataset\n",
+        "data.head()\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "g_h508FEClxO"
+      },
+      "outputs": [],
+      "source": [
+        "# Clean the data (remove unnecessary columns)\n",
+        "data = data[['v1', 'v2']]\n",
+        "data.columns = ['label', 'message']\n",
+        "\n",
+        "# Encode labels to numerical values\n",
+        "label_encoder = LabelEncoder()\n",
+        "data['label'] = label_encoder.fit_transform(data['label'])\n",
+        "\n",
+        "# Split the dataset into training and testing sets\n",
+        "train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)\n",
+        "\n",
+        "# Display the shapes of the datasets\n",
+        "print(f\"Train Data Shape: {train_data.shape}\")\n",
+        "print(f\"Test Data Shape: {test_data.shape}\")\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "zOMKywn4zReN"
+      },
+      "outputs": [],
+      "source": [
+        "# Create a pipeline that combines CountVectorizer and a neural network model\n",
+        "model = Pipeline([\n",
+        "    ('vectorizer', CountVectorizer()),\n",
+        "    ('classifier', tf.keras.Sequential([\n",
+        "        tf.keras.layers.Dense(16, activation='relu', input_shape=(None,)),\n",
+        "        tf.keras.layers.Dense(8, activation='relu'),\n",
+        "        tf.keras.layers.Dense(1, activation='sigmoid')  # Output layer for binary classification\n",
+        "    ]))\n",
+        "])\n",
+        "\n",
+        "# Fit the model to the training data\n",
+        "X_train = train_data['message']\n",
+        "y_train = train_data['label']\n",
+        "model.fit(X_train, y_train)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "J9tD9yACG6M9"
+      },
+      "outputs": [],
+      "source": [
+        "def predict_message(message):\n",
+        "    \"\"\"Predict whether the given message is 'ham' or 'spam'.\"\"\"\n",
+        "    prediction = model.predict([message])\n",
+        "    likelihood = prediction[0][0]\n",
+        "    label = 'ham' if likelihood < 0.5 else 'spam'\n",
+        "    return [likelihood, label]\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Dxotov85SjsC"
+      },
+      "outputs": [],
+      "source": [
+        "# Test the predict_message function with some example messages\n",
+        "test_messages = [\n",
+        "    \"Free entry in 2 a weekly competition to win FA Cup tickets. Text FA Cup to 12345 to enter.\",\n",
+        "    \"Hey, how have you been? Let's catch up soon!\",\n",
+        "    \"Congratulations! You've won a $1,000 Walmart gift card. Click here to claim your prize.\"\n",
+        "]\n",
+        "\n",
+        "for message in test_messages:\n",
+        "    result = predict_message(message)\n",
+        "    print(f\"Message: {message}\\nLikelihood: {result[0]:.2f}, Class: {result[1]}\\n\")\n",
+        "\n"
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "name": "fcc_sms_text_classification.ipynb",
+      "private_outputs": true,
+      "provenance": [],
+      "toc_visible": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {}
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
